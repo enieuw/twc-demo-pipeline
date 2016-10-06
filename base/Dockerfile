@@ -4,3 +4,4 @@ RUN yum install -y epel-release && yum install -y nginx
 
 EXPOSE 80 443
 
+CMD ["nginx", "-g", "daemon off;"]
