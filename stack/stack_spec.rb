@@ -8,6 +8,6 @@ describe "Dockerfile" do
    end
 
    describe file('/usr/share/nginx/html/index.html') do
-      it { should contain 'Hello World' }
+      it { should contain '<h1>Hello world!</h1>' }
    end
 end
