@@ -1,0 +1,41 @@
+require 'rake'
+require 'rspec/core/rake_task'
+require 'ci/reporter/rake/rspec'
+
+task :spec    => ['ci:setup:rspec', 'spec:all']
+task :default => :spec
+
+#Rake namespace to generate tasks for all found specs
+namespace :spec do |n,args|
+  targets = []
+  Dir.glob('./spec/*').each do |dir|
+    next unless File.directory?(dir)
+    target = File.basename(dir)
+    target = "_#{target}" if target == "default"
+    targets << target
+  end
+
+  task :all     => targets
+  task :default => :all
+
+  targets.each do |target|
+    original_target = target == "_default" ? target[1..-1] : target
+    desc "Run serverspec tests to #{original_target}"
+    RSpec::Core::RakeTask.new(target.to_sym, [:image_id]) do |t, args|
+      ENV['TARGET_HOST'] = original_target
+      img = args[:image_id]
+      ENV['IMAGE_ID'] = img
+      t.pattern = "spec/#{original_target}/*_spec.rb"
+    end
+  end
+end
+
+#Rake task to execute a specific set of tests
+task :test, [:folder, :image_id] do |t,args|
+   folder = args[:folder]
+   img = args[:image_id]
+
+   #The ci:setup:rspec invokes the reporter gem to generate reports for Jenkins
+   Rake::Task["ci:setup:rspec"].invoke()
+   Rake::Task["spec:#{folder}"].invoke(img)
+end
